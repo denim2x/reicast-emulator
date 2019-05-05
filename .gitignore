@@ -2,6 +2,7 @@
 *.class
 *.orig
 *build_obj
+cmake-build-debug
 Workdir/data
 Workdir/reicast*
 Workdir/vmu*
