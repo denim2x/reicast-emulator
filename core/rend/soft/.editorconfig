@@ -1,0 +1,9 @@
+[*]
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+curly_bracket_next_line = false
+spaces_around_operators = hybrid
+indent_brace_style = K&R
+continuation_indent_size = 4
