@@ -1,0 +1,3 @@
+[submodule "core/deps/FritzGL"]
+	path = core/deps/FritzGL
+	url = https://github.com/denim2x/FritzGL

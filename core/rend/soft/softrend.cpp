@@ -9,11 +9,11 @@
 #include <cmath>
 
 #include "rend/gles/gles.h"
-#include "rend/soft/util.h"
+#include "deps/FritzGL/FritzGL.hpp"
 
 using std::clamp;
 
-typedef VO_BORDER_COL_type Color;
+//typedef VO_BORDER_COL_type Color;
 
 u32 decoded_colors[3][65536];
 
@@ -23,6 +23,14 @@ u32 decoded_colors[3][65536];
 
 #define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
 #define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
+
+#define SHUFFL(v) v
+
+#if HOST_OS == OS_WINDOWS
+#define FLIP_Y 479 -
+#else
+#define FLIP_Y
+#endif
 
 DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
@@ -51,8 +59,7 @@ struct softrend : Renderer {
 #endif
 
   virtual bool Init() {
-
-    const_setAlpha = _mm_set1_epi32(0xFF000000);
+    //const_setAlpha = _mm_set1_epi32(0xFF000000);
     u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
     memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
 
@@ -154,24 +161,13 @@ struct softrend : Renderer {
   }
 
   virtual void Present() {
-    __m128* psrc = (__m128*)render_buffer;
-    __m128* pdst = (__m128*)pixels;
-
-#define SHUFFL(v) v
-
-#if HOST_OS == OS_WINDOWS
-#define FLIP_Y 479 -
-#else
-#define FLIP_Y
-#endif
-
     const int stride = STRIDE_PIXEL_OFFSET / 4;
     for (int y = 0; y < MAX_RENDER_HEIGHT; y += 4) {
       for (int x = 0; x < MAX_RENDER_WIDTH; x += 4) {
-        pdst[(FLIP_Y (y + 0))*stride + x / 4] = SHUFFL(*psrc++);
-        pdst[(FLIP_Y (y + 1))*stride + x / 4] = SHUFFL(*psrc++);
-        pdst[(FLIP_Y (y + 2))*stride + x / 4] = SHUFFL(*psrc++);
-        pdst[(FLIP_Y (y + 3))*stride + x / 4] = SHUFFL(*psrc++);
+        pixels[(FLIP_Y (y + 0))*stride + x / 4] = SHUFFL(*render_buffer++);
+        pixels[(FLIP_Y (y + 1))*stride + x / 4] = SHUFFL(*render_buffer++);
+        pixels[(FLIP_Y (y + 2))*stride + x / 4] = SHUFFL(*render_buffer++);
+        pixels[(FLIP_Y (y + 3))*stride + x / 4] = SHUFFL(*render_buffer++);
       }
     }
 
@@ -227,18 +223,18 @@ struct softrend : Renderer {
 
       u32* poly_idx = &idx[params[i].first];
 
-      draw_triangles<alpha_mode>(params[i], area);   /*
+      render_list<alpha_mode>(params[i], area, poly_idx);   /*
       for (int v = 0; v < vertex_count; v++) {
         ////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
         RendtriangleFn fn = RendtriangleFns[alpha_mode][params[i].tsp.UseAlpha][params[i].pcw.Texture][params[i].tsp.IgnoreTexA][params[i].tsp.ShadInstr][params[i].pcw.Offset];
 
         fn<alpha_mode>(params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer, area);
-      }                                               */
+      }                                                      */
     }
   }
 
 protected:
-  void draw_triangles<alpha_mode>(PolyParam pp, RECT* area) {
+  void render_list<alpha_mode>(PolyParam pp, RECT* area, u32* idx) {
     auto&& verts = pvrrc.verts.head();
     auto vertex_count = pp.count - 2;
 
@@ -256,6 +252,7 @@ protected:
         texture = raw_GetTexture(pp->tsp, pp->tcw);
       }
     }
+
   }
 };
 
