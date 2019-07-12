@@ -11,18 +11,17 @@
 #include "rend/gles/gles.h"
 #include "deps/FritzGL/FritzGL.hpp"
 
-using std::clamp;
+using Fritz::Context;
 
 //typedef VO_BORDER_COL_type Color;
 
 u32 decoded_colors[3][65536];
 
-#define MAX_RENDER_WIDTH 640
-#define MAX_RENDER_HEIGHT 480
-#define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
-
-#define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
-#define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
+const let MAX_RENDER_WIDTH = 640;
+const let MAX_RENDER_HEIGHT = 480;
+constexpr auto MAX_RENDER_PIXELS = MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT;
+constexpr auto STRIDE_PIXEL_OFFSET = MAX_RENDER_WIDTH;
+constexpr auto Z_BUFFER_PIXEL_OFFSET = MAX_RENDER_PIXELS;
 
 #define SHUFFL(v) v
 
@@ -50,8 +49,15 @@ struct RECT {
 BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 
+class Bitmap : public Fritz::Bitmap {
 
-struct softrend : Renderer {
+};
+
+class softrend : public Renderer {
+protected:
+  Context _ctx;
+
+public:
 #if HOST_OS == OS_WINDOWS
   HWND hWnd;
   HBITMAP hBMP = 0, holdBMP;
@@ -66,8 +72,8 @@ struct softrend : Renderer {
 #if HOST_OS == OS_WINDOWS
     hWnd = (HWND)libPvr_GetRenderTarget();
 
-    bi.biWidth = 640;
-    bi.biHeight = 480;
+    bi.biWidth = MAX_RENDER_WIDTH;
+    bi.biHeight = MAX_RENDER_HEIGHT;
 
     RECT rect;
 
@@ -133,12 +139,12 @@ struct softrend : Renderer {
     #pragma omp parallel num_threads(tcount)
     {
       int thd = omp_get_thread_num();
-      int y_offs = 480 % omp_get_num_threads();
-      int y_thd = 480 / omp_get_num_threads();
+      int y_offs = MAX_RENDER_HEIGHT % omp_get_num_threads();
+      int y_thd = MAX_RENDER_HEIGHT / omp_get_num_threads();
       int y_start = (!!thd) * y_offs + y_thd * thd;
       int y_end =  y_offs + y_thd * (thd + 1);
 
-      RECT area = { 0, y_start, 640, y_end };
+      RECT area = { 0, y_start, MAX_RENDER_WIDTH, y_end };
       RenderParamList<0>(&pvrrc.global_param_op, &area);      // opaque
       RenderParamList<1>(&pvrrc.global_param_pt, &area);      // punch-through
       RenderParamList<2>(&pvrrc.global_param_tr, &area);      // trig-sort
@@ -161,18 +167,17 @@ struct softrend : Renderer {
   }
 
   virtual void Present() {
-    const int stride = STRIDE_PIXEL_OFFSET / 4;
+    const let stride = STRIDE_PIXEL_OFFSET / 4;
     for (int y = 0; y < MAX_RENDER_HEIGHT; y += 4) {
       for (int x = 0; x < MAX_RENDER_WIDTH; x += 4) {
-        pixels[(FLIP_Y (y + 0))*stride + x / 4] = SHUFFL(*render_buffer++);
-        pixels[(FLIP_Y (y + 1))*stride + x / 4] = SHUFFL(*render_buffer++);
-        pixels[(FLIP_Y (y + 2))*stride + x / 4] = SHUFFL(*render_buffer++);
-        pixels[(FLIP_Y (y + 3))*stride + x / 4] = SHUFFL(*render_buffer++);
+        for (auto k = 0; k < 4; ++k) {
+          pixels[(FLIP_Y (y + k))*stride + x / 4] = SHUFFL(*render_buffer++);
+        }
       }
     }
 
 #if HOST_OS == OS_WINDOWS
-    SetDIBits(hmem, hBMP, 0, 480, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+    SetDIBits(hmem, hBMP, 0, MAX_RENDER_HEIGHT, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
     RECT clientRect;
 
@@ -181,18 +186,18 @@ struct softrend : Renderer {
     HDC hdc = GetDC(hWnd);
     int w = clientRect.right - clientRect.left;
     int h = clientRect.bottom - clientRect.top;
-    int x = (w - 640) / 2;
-    int y = (h - 480) / 2;
+    int x = (w - MAX_RENDER_WIDTH) / 2;
+    int y = (h - MAX_RENDER_HEIGHT) / 2;
 
-    BitBlt(hdc, x, y, 640 , 480 , hmem, 0, 0, SRCCOPY);
+    BitBlt(hdc, x, y, MAX_RENDER_WIDTH , MAX_RENDER_HEIGHT , hmem, 0, 0, SRCCOPY);
     ReleaseDC(hWnd, hdc);
 #elif defined(SUPPORT_X11)
     extern Window x11_win;
     extern Display* x11_disp;
     extern Visual* x11_vis;
 
-    int width = 640;
-    int height = 480;
+    int width = MAX_RENDER_WIDTH;
+    int height = MAX_RENDER_HEIGHT;
 
     extern int x11_width;
     extern int x11_height;
