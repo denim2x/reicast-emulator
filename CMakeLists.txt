@@ -52,10 +52,11 @@ file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
 file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
-file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
+file(GLOB glwrap_SRCS		${d_core}/utils/glwrap/*.cpp )
 file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
 file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
 file(GLOB gui_SRCS  ${d_core}/gui/*.cpp ${d_core}/gui/*.h)
+file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
@@ -81,6 +82,7 @@ set(core_SRCS
   ${scripting_SRCS}
   ${utils_SRCS}
   ${gui_SRCS}
+  ${wgl_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
   ${d_core}/libswirl.cpp
   ${d_core}/stdclass.cpp

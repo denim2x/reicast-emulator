@@ -69,7 +69,7 @@ void CacheFlush(void* code, void* pEnd)
 void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
-	__clear_cache((void*)code, pEnd);
+	__builtin___clear_cache((char*)code, (char*)pEnd);
 #else
 	void* start=code;
 	size_t size=(u8*)pEnd-(u8*)start+4;
@@ -315,14 +315,6 @@ struct arm_reg_alloc: RegAlloc<eReg,eFSReg,false>
 
 
 arm_reg_alloc reg;
-
-
-#ifdef naked
-#undef naked
-#define naked __attribute__((naked))
-#endif
-
-
 
 
 u32 blockno=0;

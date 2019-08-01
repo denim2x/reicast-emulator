@@ -3,7 +3,7 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#include "glwrap/GLES.h"
+#include "utils/glwrap/GLES.h"
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false
@@ -27,6 +27,9 @@ void DrawStrips();
 struct PipelineShader
 {
 	GLuint program;
+
+	GLuint tex;
+	GLuint fog_table;
 
 	GLuint scale,depth_scale;
 	GLuint extra_depth_scale;
@@ -93,6 +96,8 @@ struct gl_ctx
 	const char *glsl_version_header;
 	int gl_major;
 	bool is_gles;
+	bool rpi4_workaround;
+
 	GLuint fog_image_format;
 	GLenum index_type;
 	bool swap_buffer_not_preserved;

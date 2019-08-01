@@ -19,6 +19,7 @@
 
 #include "types.h"
 
+
 #if FEAT_SHREC == DYNAREC_JIT
 
 #include <unistd.h>
@@ -380,7 +381,9 @@ public:
 			case shop_writem:
 				GenWriteMemory(op, i);
 				break;
+#define CANONICAL_FALLBACK 0
 
+#if CANONICAL_FALLBACK
 			case shop_sync_sr:
 				GenCallRuntime(UpdateSR);
 				break;
@@ -682,7 +685,7 @@ public:
 			case shop_cvt_i2f_z:
 				Scvtf(regalloc.MapVRegister(op.rd), regalloc.MapRegister(op.rs1));
 				break;
-
+#endif
 			default:
 				shil_chf[op.op](&op);
 				break;
@@ -1414,7 +1417,7 @@ void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 }
 
 
-extern "C" void do_sqw_nommu_area_3(u32 dst, u8* sqb)
+extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 {
 	__asm__
 	(

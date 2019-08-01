@@ -206,6 +206,22 @@ __forceinline
 								  ShaderUniforms.trilinear_alpha != 1.f);
 	
 	glcache.UseProgram(CurrentShader->program);
+
+	if (gl.rpi4_workaround)
+	{
+		if (CurrentShader->tex != -1)
+		{
+			glUniform1i(CurrentShader->tex, 0);
+		}
+
+		if (CurrentShader->fog_table != -1)
+		{
+			glUniform1i(CurrentShader->fog_table, 1);
+		}
+
+		ShaderUniforms.Set(CurrentShader);
+	}
+	
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
 
@@ -948,10 +964,11 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 
 static void SetupMainVBO()
 {
-#ifndef GLES2
 	if (gl.gl_major >= 3)
+	{
 		glBindVertexArray(gl.vbo.vao);
-#endif
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
@@ -971,10 +988,12 @@ static void SetupMainVBO()
 
 void SetupModvolVBO()
 {
-#ifndef GLES2
+
 	if (gl.gl_major >= 3)
+	{
 		glBindVertexArray(gl.vbo.vao);
-#endif
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers
