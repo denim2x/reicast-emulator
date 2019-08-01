@@ -1,6 +1,6 @@
 #pragma once
 #include "rend/rend.h"
-#include "deps/libGL/libGL.hpp"
+#include "deps/rend/rend.h"
 
 const size_t MAX_RENDER_WIDTH = 640;
 const size_t MAX_RENDER_HEIGHT = 480;
