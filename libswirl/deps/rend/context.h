@@ -3,7 +3,26 @@
 
 class Context : public Device {
 protected:
-  void drawElements(GLenum mode, GLsizei count, GLenum type, const void *indices) {
+  // Recorded errors
+  bool mInvalidEnum;
+  bool mInvalidValue;
+  bool mInvalidOperation;
+  bool mOutOfMemory;
+  bool mInvalidFramebufferOperation;
+  
+  
+public:
+  enum Type {
+    UNSIGNED_BYTE,
+    UNSIGNED_SHORT,
+    UNSIGNED_INT
+  };
+  
+  void DrawElements(GLenum mode, GLsizei count, Type type, const void *indices) {
+    if (count < 0) {
+      return error(GL_INVALID_VALUE);
+    }
+    
     if (!mState.currentProgram) {
       return error(GL_INVALID_OPERATION);
     }
@@ -52,21 +71,32 @@ protected:
     }
   }
   
-public:
-  void DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices) {
-    if (count < 0) {
-      return error(GL_INVALID_VALUE);
-    }
-    
-    switch (type) {
-    case GL_UNSIGNED_BYTE:
-    case GL_UNSIGNED_SHORT:
-    case GL_UNSIGNED_INT:
+// Records an error code
+  void error(GLenum errorCode) {
+    switch (errorCode) {
+    case GL_INVALID_ENUM:
+      mInvalidEnum = true;
+      TRACE("\t! Error generated: invalid enum\n");
       break;
-    default:
-      return error(GL_INVALID_ENUM);
+    case GL_INVALID_VALUE:
+      mInvalidValue = true;
+      TRACE("\t! Error generated: invalid value\n");
+      break;
+    case GL_INVALID_OPERATION:
+      mInvalidOperation = true;
+      TRACE("\t! Error generated: invalid operation\n");
+      break;
+    case GL_OUT_OF_MEMORY:
+      mOutOfMemory = true;
+      TRACE("\t! Error generated: out of memory\n");
+      break;
+    case GL_INVALID_FRAMEBUFFER_OPERATION:
+      mInvalidFramebufferOperation = true;
+      TRACE("\t! Error generated: invalid framebuffer operation\n");
+      break;
+    default: UNREACHABLE();
     }
-    
-    drawElements(mode, count, type, indices);
   }
+  
+  
 };
